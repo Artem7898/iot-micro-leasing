@@ -1,16 +1,16 @@
-&lt;p align="center"&gt;
-  &lt;img src="https://img.shields.io/badge/Python-3.12+-blue.svg?logo=python&logoColor=white" alt="Python 3.12+"&gt;
-  &lt;img src="https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white" alt="FastAPI"&gt;
-  &lt;img src="https://img.shields.io/badge/Django_5-092E20.svg?logo=django&logoColor=white" alt="Django 5"&gt;
-  &lt;img src="https://img.shields.io/badge/SQLModel-2C3E50.svg?logo=sqlite&logoColor=white" alt="SQLModel"&gt;
-  &lt;img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?logo=pytest&logoColor=white" alt="Pytest"&gt;
-&lt;/p&gt;
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12+-blue.svg?logo=python&logoColor=white" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Django_5-092E20.svg?logo=django&logoColor=white" alt="Django 5">
+  <img src="https://img.shields.io/badge/SQLModel-2C3E50.svg?logo=sqlite&logoColor=white" alt="SQLModel">
+  <img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?logo=pytest&logoColor=white" alt="Pytest">
+</p>
 
-&lt;h1 align="center"&gt;🌐 IoT Micro-Leasing Platform&lt;/h1&gt;
+<h1 align="center">🌐 IoT Micro-Leasing Platform</h1>
 
-&lt;p align="center"&gt;
-  &lt;em&gt;IoT equipment micro-leasing: pay-per-use rental model&lt;/em&gt;
-&lt;/p&gt;
+<p align="center">
+  <em>IoT equipment micro-leasing: pay-per-use rental model</em>
+</p>
 
 ---
 
@@ -128,3 +128,4 @@ flowchart TB
     DJ --&gt; UNF
     DJ --&gt; DJORM
     DJORM &lt;--&gt;|read-only| PG
+```
