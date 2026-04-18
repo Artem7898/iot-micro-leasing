@@ -74,7 +74,7 @@ ___
   <sub>Built with ❤️ for IoT billing</sub>
 </p>
 ```
-
+Autor Artem Alimpiev 
 
 ## 🏗️ System Architecture
 
@@ -128,4 +128,4 @@ flowchart TB
     DJ --&gt; UNF
     DJ --&gt; DJORM
     DJORM &lt;--&gt;|read-only| PG
-```
+
