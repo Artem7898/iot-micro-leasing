@@ -1,15 +1,16 @@
-&lt;p align="center"&gt;
-  &lt;img src="https://img.shields.io/badge/Python-3.12+-blue.svg?logo=python&logoColor=white" alt="Python 3.12+"&gt;
-  &lt;img src="https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white" alt="FastAPI"&gt;
-  &lt;img src="https://img.shields.io/badge/Django_5-092E20.svg?logo=django&logoColor=white" alt="Django 5"&gt;
-  &lt;img src="https://img.shields.io/badge/SQLModel-2C3E50.svg?logo=sqlite&logoColor=white" alt="SQLModel"&gt;
-  &lt;img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?logo=pytest&logoColor=white" alt="Pytest"&gt;
-&lt;/p&gt;
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12+-blue.svg?logo=python&logoColor=white" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Django_5-092E20.svg?logo=django&logoColor=white" alt="Django 5">
+  <img src="https://img.shields.io/badge/SQLModel-2C3E50.svg?logo=sqlite&logoColor=white" alt="SQLModel">
+  <img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?logo=pytest&logoColor=white" alt="Pytest">
+</p>
 
-&lt;h1 align="center"&gt;🌐 Платформа микролизинга для Интернета вещей&lt;/h1&gt;
+<h1 align="center">🌐 Платформа микролизинга для Интернета вещей</h1>
 
-&lt;p align="center"&gt;
-  &lt;em&gt;Микролизинг IoT-оборудования: аренда с оплатой по факту использования&lt;/em&gt;
+<p align="center">
+  <em>Микролизинг IoT-оборудования: аренда с оплатой по факту использования</em>
+</p>
 ___
 
 ## 📋 Описание
@@ -79,51 +80,6 @@ ___
 - Slowapi + Redis: Гибкая защита от DDoS и флуда с датчиков (rate limiting)
 - Structlog: Структурированное логирование в JSON (готово для ELK/Loki)
 - Django Unfold: 
-
-___
-
-iot-micro-leasing/
-├── .env                          # Общий файл переменных окружения
-├── pyproject.toml                # Единый файл зависимостей (Python 3.12)
-├── docker-compose.yml            # Для поднятия PG, Redis локально
-├── Makefile                      # Автоматизация рутины (make run-api, etc)
-│
-├── api/                          # <-- FASTAPI КОНТУР -->
-│   ├── __init__.py
-│   ├── main.py                   # Точка входа, интеграция structlog, роуты
-│   ├── core/
-│   │   ├── config.py             # Pydantic Settings (чтение .env)
-│   │   ├── exceptions.py         # Кастомные хендлеры ошибок
-│   │   └── security.py           # Настройки fastapi-users
-│   ├── dependencies/
-│   │   └── db.py                 # DI для получения сессии БД
-│   ├── models/                   # SQLModel модели (Тут создаются таблицы!)
-│   │   ├── device.py
-│   │   └── usage.py
-│   ├── schemas/                  # Pydantic v2 схемы
-│   │   └── usage.py
-│   ├── services/                 # Бизнес-логика
-│   │   └── usage_service.py
-│   └── api/v1/endpoints/         # Роутеры
-│       └── usage.py
-│
-├── admin_panel/                  # <-- DJANGO КОНТУР -->
-│   ├── manage.py
-│   ├── admin_panel/              # Корневые настройки Django
-│   │   ├── __init__.py
-│   │   ├── settings.py           # Настройки БД, Unfold, STATIC
-│   │   ├── urls.py
-│   │   └── wsgi.py
-│   └── devices/                  # Django App (только для UI)
-│       ├── __init__.py
-│       ├── models.py             # Django модели (managed=False)
-│       ├── admin.py              # Регистрация в Unfold
-│       └── views.py              # Не нужны, Unfold сам генерит UI
-│
-└── tests/                        # <-- ТЕСТЫ -->
-    ├── conftest.py               # Фикстуры БД, клиент
-    └── api/
-        └── test_usage.py
 
 ___
 
