@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/Django_5-092E20.svg?logo=django&logoColor=white" alt="Django 5">
   <img src="https://img.shields.io/badge/SQLModel-2C3E50.svg?logo=sqlite&logoColor=white" alt="SQLModel">
   <img src="https://img.shields.io/badge/Pytest-0A9EDC.svg?logo=pytest&logoColor=white" alt="Pytest">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT">
 </p>
 
 <h1 align="center">🌐 Платформа микролизинга для Интернета вещей</h1>
@@ -82,7 +83,8 @@ ___
 
 ___
 
-## 🏗️ Архитектура системы
+## 👨‍💻 Автор → Артем Алимпиев
+## 📄 Лицензия с ссылкой на MIT
 
 ### Общая схема контуров
 
