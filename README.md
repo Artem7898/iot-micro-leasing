@@ -130,7 +130,7 @@ iot-micro-leasing/
 **Требуется Python 3.12+**
 
 ```bash
-git clone <repo_url>
+git clone https://github.com/Artem7898/iot-micro-leasing
 cd iot-micro-leasing
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
