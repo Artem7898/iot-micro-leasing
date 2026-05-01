@@ -130,7 +130,7 @@ iot-micro-leasing/
 **Requires Python 3.12+**
 
 ```bash
-git clone <repo_url>
+git clone https://github.com/Artem7898/iot-micro-leasing
 cd iot-micro-leasing
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
@@ -238,11 +238,11 @@ pytest tests/ -v
 
 ## 👨‍💻 Author
 
-**Artem Alimpiev** — Senior Python Developer
+**Artem Alimpiev** —  Python Developer
 
-- 🐙 GitHub: [@your-github](https://github.com/your-github)
-- 💼 LinkedIn: [linkedin.com/in/your-profile](https://linkedin.com/in/your-profile)
-- 📧 Email: your.email@example.com
+- 🐙 GitHub: https://github.com/Artem7898
+- 💼 LinkedIn: https://www.linkedin.com/in/artem-alimpiev/
+- 📧 Email: alimpievne@gmail.com
 
 ---
 
