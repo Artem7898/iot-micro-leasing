@@ -1,45 +1,228 @@
 {% extends "admin/base_site.html" %}
+{% load l10n %}
 
 {% block content %}
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
-    
-    {% if is_connected %}
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #4ade80;">
-            <h3 style="color: #9ca3af; margin: 0; font-size: 14px;">Статус</h3>
-            <p style="color: #4ade80; font-size: 24px; margin: 10px 0 0 0;">Подключен ✅</p>
-        </div>
+<style>
+  .iot-dashboard {
+    --iot-ink: #162d48; --iot-muted: #52667b; --iot-border: #dce5ef;
+    box-sizing: border-box; max-width: 1480px; margin: 0 auto; padding: 30px;
+    border: 1px solid var(--iot-border); border-radius: 24px; background: #f3f6fb;
+    color: var(--iot-ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .iot-dashboard *, .iot-dashboard *::before, .iot-dashboard *::after { box-sizing: border-box; }
+  .iot-dashboard h1, .iot-dashboard h2, .iot-dashboard h3, .iot-dashboard p { margin: 0; color: inherit; }
+  .iot-dashboard .iot-eyebrow { color: #536c88; font-size: 11px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+  .iot-dashboard .iot-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+  .iot-dashboard .iot-header h1 { margin: 8px 0 10px; font-size: clamp(26px, 3vw, 36px); font-weight: 750; letter-spacing: -.04em; line-height: 1.2; }
+  .iot-dashboard .iot-description { color: var(--iot-muted); font-size: 14px; line-height: 1.6; }
+  .iot-dashboard .iot-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; padding-top: 4px; }
+  .iot-dashboard .iot-header-actions form { margin: 0; }
+  .iot-dashboard .iot-refresh { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 10px 16px; border: 1px solid #c9d6e8; border-radius: 9px; background: #fff; color: #244b92; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; white-space: nowrap; }
+  .iot-dashboard .iot-refresh:hover { border-color: #295bd3; background: #eef4ff; }
+  .iot-dashboard .iot-refresh:focus-visible, .iot-dashboard .iot-table-scroll:focus-visible { outline: 3px solid #7fa7ff; outline-offset: 3px; }
+  .iot-dashboard .iot-refresh svg { width: 15px; height: 15px; }
+  .iot-dashboard .iot-updated { color: var(--iot-muted); font-size: 11px; text-align: right; line-height: 1.5; }
+  .iot-dashboard .iot-status-strip { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; padding: 14px 18px; border: 1px solid #d5e4e2; border-radius: 12px; background: #edf6f3; }
+  .iot-dashboard .iot-status-strip.iot-attention { border-color: #eddbba; background: #fff7e9; }
+  .iot-dashboard .iot-status-summary { display: flex; align-items: center; gap: 9px; color: #23654d; font-size: 13px; font-weight: 650; }
+  .iot-dashboard .iot-attention .iot-status-summary { color: #8b5518; }
+  .iot-dashboard .iot-dot { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: #23865e; }
+  .iot-dashboard .iot-dot-warning { background: #b67718; }
+  .iot-dashboard .iot-services { display: flex; flex-wrap: wrap; gap: 8px 18px; color: #3b5b50; font-size: 12px; }
+  .iot-dashboard .iot-service { display: inline-flex; align-items: center; gap: 6px; }
+  .iot-dashboard .iot-service-unavailable { color: #8b5518; }
+  .iot-dashboard .iot-alert { margin: 0 0 16px; padding: 14px 18px; border: 1px solid #eddbba; border-radius: 10px; background: #fff9ef; color: #78501d; font-size: 13px; line-height: 1.6; }
+  .iot-dashboard .iot-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .iot-dashboard .iot-stat, .iot-dashboard .iot-panel { border: 1px solid var(--iot-border); border-radius: 15px; background: #fff; box-shadow: 0 3px 10px #16375a03; }
+  .iot-dashboard .iot-stat { min-height: 156px; padding: 20px; }
+  .iot-dashboard .iot-stat-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .iot-dashboard .iot-stat h2 { color: var(--iot-muted); font-size: 12px; font-weight: 600; }
+  .iot-dashboard .iot-stat-icon { display: grid; place-items: center; flex: 0 0 auto; width: 32px; height: 32px; border-radius: 9px; background: #eef3ff; color: #426bd1; }
+  .iot-dashboard .iot-stat-icon svg { width: 17px; height: 17px; }
+  .iot-dashboard .iot-stat-value { margin-top: 13px; overflow-wrap: anywhere; font-size: clamp(24px, 2.6vw, 32px); font-weight: 750; letter-spacing: -.04em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .iot-dashboard .iot-stat-caption { margin-top: 9px; color: var(--iot-muted); font-size: 11px; line-height: 1.5; }
+  .iot-dashboard .iot-stat-caption strong { color: #31745d; font-weight: 650; }
+  .iot-dashboard .iot-main-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 20px; margin-bottom: 24px; }
+  .iot-dashboard .iot-panel { min-width: 0; padding: 24px; }
+  .iot-dashboard .iot-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+  .iot-dashboard .iot-panel h2 { font-size: 15px; font-weight: 700; letter-spacing: -.015em; }
+  .iot-dashboard .iot-panel-subtitle { margin-top: 6px; color: var(--iot-muted); font-size: 12px; line-height: 1.5; }
+  .iot-dashboard .iot-tag { flex: 0 0 auto; padding: 5px 8px; border-radius: 6px; background: #f0f4fa; color: #516a86; font-size: 10px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; }
+  .iot-dashboard .iot-hit-summary { display: flex; align-items: baseline; gap: 10px; margin-bottom: 25px; }
+  .iot-dashboard .iot-hit-summary strong { font-size: 34px; line-height: 1; letter-spacing: -.04em; }
+  .iot-dashboard .iot-hit-summary span { color: var(--iot-muted); font-size: 12px; }
+  .iot-dashboard .iot-chart-row + .iot-chart-row { margin-top: 21px; }
+  .iot-dashboard .iot-chart-label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 9px; color: #405773; font-size: 12px; }
+  .iot-dashboard .iot-chart-name { display: inline-flex; align-items: center; gap: 8px; }
+  .iot-dashboard .iot-chart-key { width: 8px; height: 8px; border-radius: 2px; background: #426bdd; }
+  .iot-dashboard .iot-chart-key-miss { background: #c68a2f; }
+  .iot-dashboard .iot-chart-count { color: var(--iot-ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .iot-dashboard .iot-track { height: 11px; overflow: hidden; border-radius: 5px; background: #edf1f7; }
+  .iot-dashboard .iot-bar { height: 100%; border-radius: 5px; background: #426bdd; }
+  .iot-dashboard .iot-bar-miss { background: #c68a2f; }
+  .iot-dashboard .iot-chart-note { margin-top: 23px; color: var(--iot-muted); font-size: 11px; line-height: 1.65; }
+  .iot-dashboard .iot-runtime { margin: 0; }
+  .iot-dashboard .iot-runtime-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid #edf1f6; }
+  .iot-dashboard .iot-runtime-row:first-child { padding-top: 0; }
+  .iot-dashboard .iot-runtime-row:last-child { padding-bottom: 0; border-bottom: 0; }
+  .iot-dashboard .iot-runtime dt { color: var(--iot-muted); font-size: 12px; }
+  .iot-dashboard .iot-runtime dd { margin: 0; color: var(--iot-ink); font-size: 13px; font-weight: 650; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .iot-dashboard .iot-table-panel { padding: 0; overflow: hidden; }
+  .iot-dashboard .iot-table-panel .iot-panel-heading { margin: 0; padding: 23px 24px; }
+  .iot-dashboard .iot-table-scroll { overflow-x: auto; }
+  .iot-dashboard table { width: 100%; margin: 0; border: 0; border-collapse: collapse; color: var(--iot-ink); background: #fff; }
+  .iot-dashboard table th { padding: 12px 24px; border-top: 1px solid #e7edf5; border-bottom: 1px solid #e7edf5; background: #f8fafe; color: #5a6d83; font-size: 10px; font-weight: 650; text-align: left; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; }
+  .iot-dashboard table td { padding: 17px 24px; border: 0; border-bottom: 1px solid #edf1f6; background: #fff; color: #415873; font-size: 12px; vertical-align: middle; white-space: nowrap; }
+  .iot-dashboard table tbody tr:last-child td { border-bottom: 0; }
+  .iot-dashboard .iot-session-id { color: var(--iot-ink); font-weight: 650; }
+  .iot-dashboard .iot-number { font-variant-numeric: tabular-nums; }
+  .iot-dashboard .iot-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 6px; background: #eaf5ef; color: #256448; font-size: 10px; font-weight: 650; }
+  .iot-dashboard .iot-badge-completed { background: #eef2f7; color: #53677d; }
+  .iot-dashboard .iot-badge-completed .iot-dot { background: #78899c; }
+  .iot-dashboard .iot-empty { padding: 34px 18px; text-align: center; }
+  .iot-dashboard .iot-empty-title { color: #344e6b; font-size: 14px; font-weight: 650; }
+  .iot-dashboard .iot-empty p + p { margin-top: 8px; color: var(--iot-muted); font-size: 12px; line-height: 1.6; }
+  .iot-dashboard .iot-footer { margin-top: 17px; color: var(--iot-muted); font-size: 11px; line-height: 1.6; }
+  @media (max-width: 1100px) {
+    .iot-dashboard { padding: 24px; }
+    .iot-dashboard .iot-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .iot-dashboard .iot-main-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .iot-dashboard { margin: 0 -10px; padding: 18px 12px; border-radius: 14px; }
+    .iot-dashboard .iot-header { flex-direction: column; gap: 17px; }
+    .iot-dashboard .iot-header-actions { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; }
+    .iot-dashboard .iot-updated { max-width: 145px; }
+    .iot-dashboard .iot-stats { gap: 10px; }
+    .iot-dashboard .iot-stat { min-height: 155px; padding: 15px 12px; }
+    .iot-dashboard .iot-stat-heading { align-items: flex-start; gap: 5px; }
+    .iot-dashboard .iot-stat h2 { font-size: 11px; }
+    .iot-dashboard .iot-stat-icon { width: 25px; height: 25px; border-radius: 7px; }
+    .iot-dashboard .iot-stat-icon svg { width: 14px; height: 14px; }
+    .iot-dashboard .iot-panel { padding: 20px 17px; }
+    .iot-dashboard .iot-table-panel { padding: 0; }
+    .iot-dashboard .iot-table-panel .iot-panel-heading { padding: 20px 17px; }
+    .iot-dashboard table th, .iot-dashboard table td { padding-left: 17px; padding-right: 17px; }
+  }
+</style>
 
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #60a5fa;">
-            <h3 style="color: #9ca3af; margin: 0; font-size: 14px;">Потребление памяти</h3>
-            <p style="color: #fff; font-size: 24px; margin: 10px 0 0 0;">{{ used_memory_human }}</p>
-        </div>
+<section class="iot-dashboard" aria-label="IoT leasing operations">
+  <header class="iot-header">
+    <div>
+      <p class="iot-eyebrow">IoT micro leasing / Overview</p>
+      <h1>Operations dashboard</h1>
+      <p class="iot-description">A current view of your device fleet, usage sessions, and infrastructure.</p>
+    </div>
+    <div class="iot-header-actions">
+      <form method="get">
+        <button class="iot-refresh" type="submit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 6.1A8 8 0 0 1 19.5 10M4.5 14A8 8 0 0 0 17.9 17.9"/></svg>
+          Refresh snapshot
+        </button>
+      </form>
+      <p class="iot-updated">Updated {{ generated_at|date:"M j, Y · H:i T" }}</p>
+    </div>
+  </header>
 
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #c084fc;">
-            <h3 style="color: #9ca3af; margin: 0; font-size: 14px;">Активных клиентов (FastAPI + Celery)</h3>
-            <p style="color: #fff; font-size: 24px; margin: 10px 0 0 0;">{{ connected_clients }}</p>
-        </div>
+  <div class="iot-status-strip{% if not redis_available or not database_available %} iot-attention{% endif %}">
+    <p class="iot-status-summary"><span class="iot-dot{% if not redis_available or not database_available %} iot-dot-warning{% endif %}" aria-hidden="true"></span>{% if redis_available and database_available %}All systems available{% else %}Service attention required{% endif %}</p>
+    <div class="iot-services">
+      <span class="iot-service{% if not database_available %} iot-service-unavailable{% endif %}"><span class="iot-dot{% if not database_available %} iot-dot-warning{% endif %}" aria-hidden="true"></span>Database {% if database_available %}available{% else %}unavailable{% endif %}</span>
+      <span class="iot-service{% if not redis_available %} iot-service-unavailable{% endif %}"><span class="iot-dot{% if not redis_available %} iot-dot-warning{% endif %}" aria-hidden="true"></span>Redis {% if redis_available %}available{% else %}unavailable{% endif %}</span>
+    </div>
+  </div>
 
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #fbbf24;">
-            <h3 style="color: #9ca3af; margin: 0; font-size: 14px;">Обработано команд</h3>
-            <p style="color: #fff; font-size: 24px; margin: 10px 0 0 0;">{{ total_commands_processed }}</p>
-        </div>
+  {% if not database_available %}<p class="iot-alert" role="status"><strong>Database metrics are unavailable.</strong> {{ database_error }} Device and session figures will return when the database is reachable.</p>{% endif %}
+  {% if not redis_available %}<p class="iot-alert" role="status"><strong>Redis metrics are unavailable.</strong> {{ redis_error }} Refresh after the service is restored.</p>{% endif %}
 
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #34d399;">
-            <h3 style="color: #9ca3af; margin: 0; font-size: 14px;">Cache Hits (Успешные лимиты)</h3>
-            <p style="color: #fff; font-size: 24px; margin: 10px 0 0 0;">{{ keyspace_hits }}</p>
-        </div>
+  <div class="iot-stats">
+    <article class="iot-stat">
+      <div class="iot-stat-heading"><h2>Registered devices</h2><span class="iot-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 17h4M10 7h4"/></svg></span></div>
+      <p class="iot-stat-value">{% if database_available %}{{ dashboard_metrics.device_count }}{% else %}—{% endif %}</p>
+      <p class="iot-stat-caption">{% if database_available %}<strong>{{ dashboard_metrics.active_device_count }} active</strong> in the fleet{% else %}Database unavailable{% endif %}</p>
+    </article>
+    <article class="iot-stat">
+      <div class="iot-stat-heading"><h2>Active sessions</h2><span class="iot-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span></div>
+      <p class="iot-stat-value">{% if database_available %}{{ dashboard_metrics.active_session_count }}{% else %}—{% endif %}</p>
+      <p class="iot-stat-caption">{% if database_available %}{{ dashboard_metrics.completed_session_count }} completed sessions{% else %}Database unavailable{% endif %}</p>
+    </article>
+    <article class="iot-stat">
+      <div class="iot-stat-heading"><h2>Recorded usage cost</h2><span class="iot-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span></div>
+      <p class="iot-stat-value">{% if database_available %}{{ dashboard_metrics.total_cost_display }}{% else %}—{% endif %}</p>
+      <p class="iot-stat-caption">{% if database_available %}USD · across all recorded sessions{% else %}Database unavailable{% endif %}</p>
+    </article>
+    <article class="iot-stat">
+      <div class="iot-stat-heading"><h2>Redis memory</h2><span class="iot-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg></span></div>
+      <p class="iot-stat-value">{% if redis_available %}{{ redis_metrics.used_memory_human }}{% else %}—{% endif %}</p>
+      <p class="iot-stat-caption">{% if redis_available %}{{ redis_metrics.connected_clients }} connected clients{% else %}Redis unavailable{% endif %}</p>
+    </article>
+  </div>
 
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #f87171;">
-            <h3 style="color: #9ca3af; margin: 0; font-size: 14px;">Cache Misses (Превышения лимитов)</h3>
-            <p style="color: #fff; font-size: 24px; margin: 10px 0 0 0;">{{ keyspace_misses }}</p>
+  <div class="iot-main-grid">
+    <section class="iot-panel" aria-labelledby="iot-cache-title">
+      <div class="iot-panel-heading"><div><h2 id="iot-cache-title">Cache lookup outcomes</h2><p class="iot-panel-subtitle">Redis key lookups since the server started</p></div><span class="iot-tag">Lifetime</span></div>
+      {% if redis_available %}
+        {% if redis_metrics.keyspace_hits or redis_metrics.keyspace_misses %}
+          <div class="iot-hit-summary"><strong>{{ redis_metrics.hit_rate }}%</strong><span>cache hit rate</span></div>
+          <div class="iot-chart-row">
+            <div class="iot-chart-label"><span class="iot-chart-name"><span class="iot-chart-key" aria-hidden="true"></span>Hits</span><span class="iot-chart-count">{{ redis_metrics.keyspace_hits }} ({{ redis_hit_percent }}%)</span></div>
+            <div class="iot-track" aria-hidden="true"><div class="iot-bar" style="width: {{ redis_hit_percent|unlocalize }}%;"></div></div>
+          </div>
+          <div class="iot-chart-row">
+            <div class="iot-chart-label"><span class="iot-chart-name"><span class="iot-chart-key iot-chart-key-miss" aria-hidden="true"></span>Misses</span><span class="iot-chart-count">{{ redis_metrics.keyspace_misses }} ({{ redis_miss_percent }}%)</span></div>
+            <div class="iot-track" aria-hidden="true"><div class="iot-bar iot-bar-miss" style="width: {{ redis_miss_percent|unlocalize }}%;"></div></div>
+          </div>
+          <p class="iot-chart-note">A hit means a requested key was found; a miss means it was absent. These counters describe cache lookups, not API request success or rate limit decisions.</p>
+        {% else %}
+          <div class="iot-empty"><p class="iot-empty-title">No cache lookups recorded yet</p><p>Hit and miss totals will appear as Redis processes key lookups.</p></div>
+        {% endif %}
+      {% else %}
+        <div class="iot-empty"><p class="iot-empty-title">Cache metrics unavailable</p><p>Redis could not be reached for this snapshot.</p></div>
+      {% endif %}
+    </section>
+
+    <section class="iot-panel" aria-labelledby="iot-runtime-title">
+      <div class="iot-panel-heading"><div><h2 id="iot-runtime-title">Redis runtime</h2><p class="iot-panel-subtitle">Current infrastructure counters</p></div></div>
+      {% if redis_available %}
+        <dl class="iot-runtime">
+          <div class="iot-runtime-row"><dt>Server uptime</dt><dd>{{ redis_metrics.uptime_display }}</dd></div>
+          <div class="iot-runtime-row"><dt>Connected clients</dt><dd>{{ redis_metrics.connected_clients }}</dd></div>
+          <div class="iot-runtime-row"><dt>Commands processed</dt><dd>{{ redis_metrics.total_commands_processed }}</dd></div>
+          <div class="iot-runtime-row"><dt>Memory in use</dt><dd>{{ redis_metrics.used_memory_human }}</dd></div>
+        </dl>
+      {% else %}
+        <div class="iot-empty"><p class="iot-empty-title">Runtime data unavailable</p><p>Check the Redis service and refresh this snapshot.</p></div>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="iot-panel iot-table-panel" aria-labelledby="iot-sessions-title">
+    <div class="iot-panel-heading"><div><h2 id="iot-sessions-title">Recent session activity</h2><p class="iot-panel-subtitle">Most recent usage sessions and their last recorded heartbeat</p></div><span class="iot-tag">Latest sessions</span></div>
+    {% if database_available %}
+      {% if dashboard_metrics.recent_sessions %}
+        <div class="iot-table-scroll" role="region" aria-label="Recent sessions" tabindex="0">
+          <table>
+            <thead><tr><th scope="col">Session</th><th scope="col">Device</th><th scope="col">Status</th><th scope="col">Recorded cost (USD)</th><th scope="col">Last heartbeat</th></tr></thead>
+            <tbody>
+              {% for session in dashboard_metrics.recent_sessions %}
+                <tr>
+                  <td><span class="iot-session-id">#{{ session.id }}</span></td>
+                  <td class="iot-number">{{ session.device_id }}</td>
+                  <td><span class="iot-badge{% if not session.is_active %} iot-badge-completed{% endif %}"><span class="iot-dot" aria-hidden="true"></span>{% if session.is_active %}Active{% else %}Completed{% endif %}</span></td>
+                  <td class="iot-number">${{ session.total_cost|floatformat:4 }}</td>
+                  <td class="iot-number">{% if session.last_ping_at %}{{ session.last_ping_at|date:"M j, Y · H:i T" }}{% else %}No heartbeat recorded{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
+      {% else %}
+        <div class="iot-empty"><p class="iot-empty-title">No sessions recorded yet</p><p>Usage activity will appear here after a device starts a session.</p></div>
+      {% endif %}
     {% else %}
-        <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; border-left: 4px solid #f87171;">
-            <h3 style="color: #f87171;">Ошибка подключения к Redis</h3>
-            <p style="color: #9ca3af;">{{ error }}</p>
-            <p style="color: #9ca3af; margin-top: 10px;">Убедитесь, что redis-server запущен.</p>
-        </div>
+      <div class="iot-empty"><p class="iot-empty-title">Session activity unavailable</p><p>The database could not be reached for this snapshot.</p></div>
     {% endif %}
-
-</div>
+  </section>
+  <p class="iot-footer">Snapshot data is collected when this page loads. Refresh to retrieve the latest available values.</p>
+</section>
 {% endblock %}

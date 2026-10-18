@@ -1,259 +1,158 @@
-<div align="center">
+# IoT Micro-Leasing 2
 
-# 🌐 Платформа микролизинга для Интернета вещей
+**English (primary)** | [Русский](README_RU.md)
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Django](https://img.shields.io/badge/Django_5-092E20.svg?logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![SQLModel](https://img.shields.io/badge/SQLModel-2C3E50.svg?logo=sqlite&logoColor=white)](https://sqlmodel.tiangolo.com/)
-[![Pytest](https://img.shields.io/badge/Pytest-0A9EDC.svg?logo=pytest&logoColor=white)](https://docs.pytest.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+A platform for tracking IoT equipment usage, with FastAPI, transactional billing,
+a Django back office, and PDF generation through Celery. Python **3.14**, Django
+**5.2 LTS**, exact `Decimal` amounts, and reproducible dependencies in `uv.lock`.
 
-**Микролизинг IoT-оборудования: аренда с оплатой по факту использования**
+## Development
 
-Enterprise-монорепозиторий · Событийный биллинг · Гибридная архитектура FastAPI + Django
-
-</div>
-
----
-
-## 📋 Описание
-
-Enterprise-монорепозиторий, реализующий договор аренды оборудования не по времени, а по факту использования — **событийная оплата** (pay-per-use).
-
-### Примеры использования
-
-| Сценарий | Модель оплаты |
-|----------|---------------|
-| 💰 **3D-принтер** | Оплата за каждый распечатанный лист |
-| 🚁 **Дрон-аграрий** | Оплата за каждый пройденный километр |
-| 📡 **IoT-датчик** | Оплата за мегабайты переданных данных |
-
----
-
-## 🧠 Почему именно эта архитектура?
-
-Приложение решает проблему высоконагруженных биллинговых систем, где критически важны:
-
-| Требование | Решение |
-|------------|---------|
-| **Идемпотентность** | Защита от двойных списаний при нестабильном Wi-Fi. IoT-устройства часто дублируют «пинг» — система гарантирует единоразовое списание. |
-| **Валидация timestamp** | Защита от Replay-атак и корректная обработка запросов из прошлого. Устройства накапливают оффлайн-буфер и отправляют пакетами. |
-| **Высокая нагрузка** | Миллионы мелких запросов с ограничением скорости (rate limiting) и полностью асинхронной обработкой. |
-
-### Гибридный контур
-
-- 🚀 **FastAPI (API-контур, порт 8000)** — принимает нагрузку, валидацию (Pydantic v2), асинхронную запись в БД
-- 🎨 **Django 5 + Unfold (Admin-контур, порт 8001)** — Back-office для менеджеров. Не нагружает API, работает в режиме read-only с современным React-интерфейсом
-
----
-
-## 🏗️ Архитектура системы
-
-```mermaid
-flowchart TB
-    subgraph Clients ["Клиенты"]
-        IOT[IoT Devices]
-        WEB[Web/Mobile SPA]
-        MGR[Business Managers]
-    end
-
-    NGINX["Nginx Reverse Proxy"]
-
-    subgraph FastAPI_Contour ["FastAPI Contour (Port 8000)"]
-        UV[Uvicorn Workers]
-        API[FastAPI App]
-        SL[Slowapi Limiter]
-        AUTH[JWT Auth]
-        SQLM[SQLModel ORM]
-    end
-
-    subgraph Django_Contour ["Django Contour (Port 8001)"]
-        GU[Gunicorn WSGI]
-        DJ[Django 5 Core]
-        UNF[Unfold Admin UI]
-        DJORM[Django ORM managed=False]
-    end
-
-    subgraph Data_Layer ["Data Layer"]
-        PG[(PostgreSQL 16)]
-        RD[(Redis)]
-    end
-
-    IOT -->|REST / WebSockets| NGINX
-    WEB -->|REST| NGINX
-    MGR -->|Browser| NGINX
-
-    NGINX -->|/api/*| UV
-    NGINX -->|/admin/*| GU
-
-    UV --> API
-    API --> SL
-    API --> AUTH
-    API --> SQLM
-    SQLM <-->|read/write| PG
-    SL <-->|rate limit store| RD
-
-    GU --> DJ
-    DJ --> UNF
-    DJ --> DJORM
-    DJORM <-->|read-only| PG
-```
-
----
-
-## 📁 Структура проекта
-
-```
-iot-micro-leasing/
-├── api/                    # FastAPI-контур (API-шлюз)
-│   ├── core/               # Celery, конфигурация, DI
-│   ├── models/             # SQLModel-ORM (единая схема)
-│   ├── routers/            # Эндпоинты FastAPI
-│   └── main.py             # Точка входа Uvicorn
-├── admin_panel/            # Django-контур (Back-office)
-│   ├── core/               # Настройки Django
-│   ├── apps/               # Приложения Django
-│   └── manage.py
-├── tests/                  # Pytest-сюита (полная изоляция)
-├── docker-compose.yml      # PostgreSQL + Redis
-├── pyproject.toml          # Зависимости проекта
-└── .env.example            # Шаблон переменных окружения
-```
-
----
-
-## 🚀 Быстрый старт
-
-### 1. Клонирование и установка
-
-**Требуется Python 3.12+**
+Use the existing checkout. Each cloud task already runs in an isolated
+environment; setup does not require an additional Git worktree.
 
 ```bash
-git clone https://github.com/Artem7898/iot-micro-leasing
-cd iot-micro-leasing
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+uv sync --frozen --extra dev
+cp .env.example .env  # Only if you do not already have your own .env.
+# Redis is required for rate limiting and background tasks:
+docker compose up -d redis
+uv run --frozen alembic upgrade head
+uv run --frozen python admin_panel/manage.py migrate --noinput
 ```
 
-### 2. Настройка окружения
+SQLite stores data in `.local/state/dev.sqlite3`. FastAPI and Django share the same
+`DATABASE_URL`; set an absolute `IOT_STATE_DIR` if you run commands from different
+directories. PostgreSQL is supported through `postgresql+psycopg://`. The
+PostgreSQL container is optional: supply `POSTGRES_PASSWORD` through a secure
+environment before starting it. PostgreSQL will not initialize with an empty
+password; starting Redis alone does not require a PostgreSQL password.
+
+Run these commands in separate terminals from the project root:
 
 ```bash
-cp .env.example .env
-# Отредактируй .env: укажи данные PostgreSQL и Redis
-# Для быстрого старта можно использовать SQLite
+make run-api
+make run-admin
+make run-worker
+make run-beat
 ```
 
-### 3. Инфраструктура (опционально)
+The API listens on port 8000 and Django on port 8001; both bind to loopback. API
+documentation is at `/api/docs`, back office login at `/admin/`, and the
+operational dashboard at `/admin/redis-metrics/`. Create your own login account
+with `uv run --frozen python admin_panel/manage.py createsuperuser`. Passwords do
+not belong in the repository or environment setup instructions. `runserver` is
+for development.
+
+`.env.example` explicitly disables API authentication **for local development
+only**. By default, the code requires `X-API-Key`; a missing configured `API_KEY`
+results in 503, and an incorrect key results in 401. Production requires
+`ENVIRONMENT=production`, PostgreSQL, `API_AUTH_ENABLED=true`, a securely stored
+`API_KEY` of at least 32 characters, `DJANGO_DEBUG=false`, a strong
+`DJANGO_SECRET_KEY`, and explicit `DJANGO_ALLOWED_HOSTS`. Expose the application
+through an HTTPS reverse proxy and a production WSGI/ASGI server; Redis and the
+database must not be accessible from the Internet. The API key is intended for a
+trusted gateway within one organization: user/tenant authorization and device
+mTLS require separate design work. Do not share the key with untrusted clients.
+
+## API behavior
+
+`POST /api/v1/usage/ping` requires a unique `Idempotency-Key` (1–128 printable ASCII
+characters). For retries, send **the same key and the same payload**, including
+the original timestamp. The response is stored in the database: a retry does not
+increase the amount owed; reusing a key for a different event returns 409. Keys
+are global within a platform instance.
+
+```json
+{
+  "device_id": "dev_printer01",
+  "event_type": "usage_tick",
+  "timestamp": "2026-10-18T12:00:00+00:00",
+  "payload": {"units_consumed": "10.0000"}
+}
+```
+
+First register the device through a trusted provisioning process and send
+`session_start`; finish its operation with `session_end`. The dashboard
+intentionally does not modify financial records. Events must include a time zone,
+be no more than 300 seconds old, and must not be in the future. Events within a
+session must have monotonically nondecreasing timestamps; equal timestamps are
+allowed for different events. `usage_tick` requires positive consumption; other
+events allow zero. Consumption is limited to 1e9 and four decimal places; JSON
+bodies are limited to 16 KiB. Extra fields, negative numbers, booleans, and
+NaN/Infinity are rejected. The amount owed for a session is limited to
+`99999999.9999`, with half-even rounding to four decimal places. Monetary
+responses are **strings**, such as `"5.0000"`, without conversion to float.
+
+Opening a second active session, a key conflict, an out-of-order event, or an
+amount overflow returns 409; an unknown device returns 404, a disabled device
+403, and invalid input 422. For a temporary database error (503), retry the
+request with the original key. Error responses do not expose the original
+payload or internal exception messages. `X-Request-ID` links each request to
+structured logs.
+
+## Architecture and reliability
+
+- Synchronous SQLAlchemy/SQLModel sessions run in the FastAPI thread pool and are
+  always closed. Each transaction locks the device row before reading or updating
+  the balance; SQLite serializes writes. A unique partial index permits only one
+  active session per device. The database also enforces financial constraints.
+- Closing a session, storing a replay receipt, and inserting an invoice outbox
+  entry are committed together. Dispatch to Redis occurs after commit. The worker
+  writes the PDF atomically, then sets `completed_at`; unfinished deliveries are
+  retried after 10 minutes. Celery beat is required for recovery after failures.
+  Delivery is at least once; the PDF handler supports retries and concurrent
+  execution.
+- Alembic owns the financial schema; Django owns user and admin tables. Financial
+  Django models are unmanaged and read-only. For existing databases, follow the
+  [migration instructions](migrations/README.md), first on a restored copy.
+- The shared Redis-backed rate limiter does not silently fall back to in-memory
+  storage when Redis fails. `/health` checks process liveness; `/ready` checks
+  Redis, database connectivity, and the required tables and columns.
+- The dashboard shows actual amounts, sessions, devices, and Redis metrics. It
+  limits results to the 10 most recent sessions, closes Redis connections, and
+  uses timeouts. Service errors are displayed without internal details. At large
+  volumes, move exact aggregates to summary tables or a cache.
+
+PDFs, logs, and the idempotency ledger need a retention policy and disk monitoring.
+Automatic deletion of financial data is intentionally disabled: the operator must
+define the retention period and guaranteed protection window against duplicate
+requests.
+
+## Validation
 
 ```bash
-docker-compose up -d postgres redis
+make lint
+make run-tests
+uv run --frozen --extra dev pytest --cov=api --cov-report=term-missing
+uv run --frozen --extra dev pip-audit --local
+uv run --frozen alembic check
+uv run --frozen python admin_panel/manage.py makemigrations --check --dry-run
 ```
 
-### 4. Запуск сервисов
+Unit tests isolate Redis and use temporary databases. For real PostgreSQL
+concurrency and migration checks, set `TEST_POSTGRES_URL`; each test uses its own
+temporary schema. Without this variable, only the PostgreSQL checks are skipped.
+GitHub Actions tests both databases.
 
-#### FastAPI (API-шлюз)
+For discovered defects, fixes, and validation limits, see the
+[audit report](AUDIT.md).
+
+## Branch protection
+
+The default branch is `master`. The policy in
+[.github/branch-protection.json](.github/branch-protection.json) requires pull
+requests, passing `python` and `postgres` checks on an up-to-date branch, resolved
+conversations, and linear history. It blocks force pushes and deletion and also
+applies to administrators. A second reviewer's approval is optional, so the
+repository can be maintained by one person.
+
+With GitHub API access and repository administration permission, run:
 
 ```bash
-cd api
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+bash .github/protect-master.sh
 ```
 
-🔗 **Swagger UI:** http://localhost:8000/api/docs
-
-#### Redis (если не через Docker)
-
-```bash
-redis-server
-```
-
-#### Celery Worker (генерация PDF)
-
-```bash
-cd api
-celery -A api.core.celery_app.celery_app worker --loglevel=info -Q invoices
-```
-
-#### Django Admin Panel
-
-```bash
-cd admin_panel
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver 8001
-```
-
-🔗 **Админка:** http://localhost:8001/admin/
-
-🔗 **Дашборд Redis:** http://localhost:8001/admin/redis-metrics/
-
----
-
-## 🧪 Тестирование
-
-Тесты полностью изолированы от внешней среды — не требуют PostgreSQL или Redis.
-
-Используются **in-memory SQLite** и подмена зависимостей (DI):
-
-```bash
-pytest tests/ -v
-```
-
----
-
-## ⚙️ Технологический стек
-
-| Компонент | Назначение |
-|-----------|------------|
-| **SQLModel + AsyncPG** | Единая ORM. SQLModel создаёт таблицы, которые читает Django без дублирования схемы |
-| **Pydantic v2 (strict)** | Защита от мусорных данных с IoT-устройств. Строгая валидация на границе системы |
-| **Slowapi + Redis** | Гибкая защита от DDoS и флуда с датчиков. Rate limiting с распределённым хранилищем |
-| **Structlog** | Структурированное логирование в JSON. Готово для интеграции с ELK / Loki |
-| **Django Unfold** | Современный React-интерфейс админ-панели. Тёмная тема, фильтры, дашборды |
-| **JWT Auth** | Stateless-аутентификация для IoT-устройств и SPA-клиентов |
-| **Celery** | Фоновая генерация PDF-инвойсов и отправка уведомлений |
-
----
-
-## 🔒 Безопасность
-
-- **Идемпотентные эндпоинты** — повторный запрос с тем же `idempotency-key` не приводит к двойному списанию
-- **Replay-защита** — timestamp вне допустимого окна (±5 мин) отклоняется
-- **Rate limiting** — персональные лимиты на уровне device_id + endpoint
-- **JWT с коротким TTL** — access-токен 15 мин, refresh-токен 7 дней
-
----
-
-## 📈 Масштабирование
-
-| Уровень | Стратегия |
-|---------|-----------|
-| **Горизонтальное** | Nginx upstream → multiple Uvicorn workers. Django-контур масштабируется независимо |
-| **База данных** | PostgreSQL read-replica для Django-контура. FastAPI пишет в master |
-| **Кэш** | Redis Cluster для rate limiter и сессий |
-| **Очереди** | Celery workers по количеству ядер. Отдельная очередь `invoices` для PDF |
-
----
-
-## 👨‍💻 Автор
-
-**Артем Алимпиев** —  Python Developer
-
-- 🐙 GitHub: https://github.com/Artem7898
-- 💼 LinkedIn: https://www.linkedin.com/in/artem-alimpiev/
-- 📧 Email: alimpievne@gmail.com
-
----
-
-## 📄 Лицензия
-
-Распространяется под лицензией MIT. Подробности в файле [LICENSE](LICENSE).
-
----
-
-<div align="center">
-
-*Построено для миллионов IoT-событий. Идемпотентно. Асинхронно. Без двойных списаний.*
-
-</div>
+The helper checks GitHub first, preserves existing protection or rulesets, and
+verifies a newly applied policy. Committing the policy file alone does not enable
+branch protection. The environment must allow `api.github.com`; do not put tokens
+in tracked files or shell command arguments.

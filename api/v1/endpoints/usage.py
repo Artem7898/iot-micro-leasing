@@ -1,37 +1,32 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from structlog import get_logger
+from typing import Annotated
+
+import structlog
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlmodel import Session
 
 from api.dependencies.db import get_db_session
-from api.schemas.usage import UsagePingRequest, BillingResponse
+from api.schemas.usage import BillingResponse, UsagePingRequest
 from api.services.usage_service import UsageService
 
-logger = get_logger(__name__)
+logger = structlog.get_logger(__name__)
 router = APIRouter()
 
-# Инициализация Rate Limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["500/minute"])
 
-@router.post("/ping")
-
-
-@limiter.limit("100/second")
-async def process_usage_ping(
+@router.post("/ping", response_model=BillingResponse)
+def process_usage_ping(
     request: Request,
     body: UsagePingRequest,
-    db: Session = Depends(get_db_session)
+    idempotency_key: Annotated[
+        str, Header(min_length=1, max_length=128, pattern=r"^[\x21-\x7e]+$")
+    ],
+    db: Annotated[Session, Depends(get_db_session)],
 ) -> BillingResponse:
-    """
-    Принимает эвенты от устройств.
-    Подсчитывает стоимость по факту потребления (Pay-per-use).
-    """
+    """Accept a device event once; reuse its key when retrying a request."""
     try:
-        service = UsageService(db)
-        return await service.process_ping(body)
+        return UsageService(db).process_ping(body, idempotency_key)
     except HTTPException:
-        raise  # FastAPI сам обработает HTTPException
-    except Exception as e:
+        raise
+    except Exception as error:
+        db.rollback()
         logger.exception("unexpected_error_processing_ping")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from error

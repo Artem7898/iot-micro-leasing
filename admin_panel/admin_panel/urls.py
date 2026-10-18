@@ -17,9 +17,13 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+
 from .views import redis_metrics_view
 
 urlpatterns = [
-    path('admin/redis-metrics/', admin.site.admin_view(redis_metrics_view), name='redis_metrics'),
+    path(
+        "admin/dashboard/", admin.site.admin_view(redis_metrics_view), name="operations_dashboard"
+    ),
+    path("admin/redis-metrics/", admin.site.admin_view(redis_metrics_view), name="redis_metrics"),
     path("admin/", admin.site.urls),
 ]

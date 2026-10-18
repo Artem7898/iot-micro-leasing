@@ -1,0 +1,10 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div style="margin-bottom: 24px; padding: 20px; border: 1px solid #94a3b8; border-radius: 12px;">
+  <h2 style="margin: 0 0 8px;">Operations dashboard</h2>
+  <p style="margin: 0 0 12px;">View live device activity, recorded usage costs, and Redis service health.</p>
+  <a href="{% url 'operations_dashboard' %}" style="font-weight: 600; text-decoration: underline;">Open operations dashboard →</a>
+</div>
+{{ block.super }}
+{% endblock %}
